@@ -170,32 +170,32 @@ def forward_problem(pulse_time, pulse_number, TAPobject_data_original: TAPobject
 			x2 = x1.split('.')[0]
 
 			if x2 == 'forward':
-				if 'dG' in j:
-					low_bounds.append(-np.inf)
-				elif TAPobject_data.mechanism.elementary_processes[w2].forward.lower_bound != None:
+				if (TAPobject_data.mechanism.elementary_processes[w2].forward.lower_bound != None) and ('dG' not in TAPobject_data.mechanism.elementary_processes[w2].forward.lower_bound):
 					low_bounds.append(TAPobject_data.mechanism.elementary_processes[w2].forward.lower_bound)
+				elif 'dG' in j:
+					low_bounds.append(-np.inf)
 				else:
 					low_bounds.append(0)
 			
-				if 'dG' in j:
-					up_bounds.append(np.inf)			
-				elif TAPobject_data.mechanism.elementary_processes[w2].forward.upper_bound != None:
+				if (TAPobject_data.mechanism.elementary_processes[w2].forward.upper_bound != None) and ('dG' not in TAPobject_data.mechanism.elementary_processes[w2].forward.lower_bound):
 					up_bounds.append(TAPobject_data.mechanism.elementary_processes[w2].forward.upper_bound)
+				elif 'dG' in j:
+					up_bounds.append(np.inf)			
 				else:
 					up_bounds.append(np.inf)
 
 			if x2 == 'backward':
-				if 'dG' in j:
-					low_bounds.append(-np.inf)
-				elif TAPobject_data.mechanism.elementary_processes[w2].backward.lower_bound != None:
+				if (TAPobject_data.mechanism.elementary_processes[w2].backward.lower_bound != None) and ('dG' not in TAPobject_data.mechanism.elementary_processes[w2].forward.lower_bound):
 					low_bounds.append(TAPobject_data.mechanism.elementary_processes[w2].backward.lower_bound)
+				elif 'dG' in j:
+					low_bounds.append(-np.inf)
 				else:
 					low_bounds.append(0)
 			
-				if 'dG' in j:
-					up_bounds.append(np.inf)
-				elif TAPobject_data.mechanism.elementary_processes[w2].backward.upper_bound != None:
-					up_bounds.append(TAPobject_data.mechanism.elementary_processes[w2].backward.upper_bound)			
+				if (TAPobject_data.mechanism.elementary_processes[w2].backward.upper_bound != None) and ('dG' not in TAPobject_data.mechanism.elementary_processes[w2].forward.lower_bound):
+					up_bounds.append(TAPobject_data.mechanism.elementary_processes[w2].backward.upper_bound)
+				elif 'dG' in j:
+					up_bounds.append(np.inf)			
 				else:
 					up_bounds.append(np.inf)
 
@@ -470,24 +470,24 @@ def forward_problem(pulse_time, pulse_number, TAPobject_data_original: TAPobject
 						c_exp = output_data[k_fitting][0][output_data['time'][0].index(round(t,6))]
 						slope = (-c_exp)/(1/TAPobject_data.mesh)
 						intercept = c_exp - ((1-(1/TAPobject_data.mesh))*slope)
-						w_new = Expression('B',A=Constant(slope),B=Constant(1),degree=0)
+						w_new = Expression('A*x[0]+B',A=Constant(slope),B=Constant(intercept),degree=0)
 						w_new2 = interpolate(w_new,V_du)
 						w3 = project(w_new2,V_du)
 						
 						try:
 							if k_fitting in TAPobject_data.reactor_species.gasses:
-								jfunc_2 += assemble(inner(u_n[species_order_dictionary[k_fitting]] - w3,u_n[species_order_dictionary[k_fitting]] - w3)*dP(1))/((TAPobject_data.reactor_species.gasses[k_fitting].sigma)**2)
+								jfunc_2 += assemble(inner(u_n[species_order_dictionary[k_fitting]] - w3,u_n[species_order_dictionary[k_fitting]]*(2*(TAPobject_data.reactor_species.gasses[k_fitting].inert_diffusion /(dx_r)) * (TAPobject_data.reactor.reactor_radius**2)*3.14159) - w3)*dP(1))/((TAPobject_data.reactor_species.gasses[k_fitting].sigma)**2)
 							elif k_fitting in TAPobject_data.reactor_species.inert_gasses:
-								jfunc_2 += assemble(inner(u_n[species_order_dictionary[k_fitting]] - w3,u_n[species_order_dictionary[k_fitting]] - w3)*dP(1))/((TAPobject_data.reactor_species.inert_gasses[k_fitting].sigma)**2)
+								jfunc_2 += assemble(inner(u_n[species_order_dictionary[k_fitting]]*(2*(TAPobject_data.reactor_species.inert_gasses[k_fitting].inert_diffusion /(dx_r)) * (TAPobject_data.reactor.reactor_radius**2)*3.14159) - w3,u_n[species_order_dictionary[k_fitting]]*(2*(TAPobject_data.reactor_species.inert_gasses[k_fitting].inert_diffusion /(dx_r)) * (TAPobject_data.reactor.reactor_radius**2)*3.14159) - w3)*dP(1))/((TAPobject_data.reactor_species.inert_gasses[k_fitting].sigma)**2)
 								
 						except UnboundLocalError:
 							w_temp_2 = Expression('1',degree=0) 
 							w_temp2_2 = interpolate(w_temp_2,V_du)
 							w4_2 = project(w_temp2_2,V_du)	
 							if k_fitting in TAPobject_data.reactor_species.gasses:
-								jfunc_2 = assemble(inner(u_n[species_order_dictionary[k_fitting]] - w3,u_n[species_order_dictionary[k_fitting]] - w3)*dP(1))/((TAPobject_data.reactor_species.gasses[k_fitting].sigma)**2)	
+								jfunc_2 = assemble(inner(u_n[species_order_dictionary[k_fitting]]*(2*(TAPobject_data.reactor_species.gasses[k_fitting].inert_diffusion /(dx_r)) * (TAPobject_data.reactor.reactor_radius**2)*3.14159) - w3,u_n[species_order_dictionary[k_fitting]]*(2*(TAPobject_data.reactor_species.gasses[k_fitting].inert_diffusion /(dx_r)) * (TAPobject_data.reactor.reactor_radius**2)*3.14159) - w3)*dP(1))/((TAPobject_data.reactor_species.gasses[k_fitting].sigma)**2)	
 							elif k_fitting in TAPobject_data.reactor_species.inert_gasses:
-								jfunc_2 = assemble(inner(u_n[species_order_dictionary[k_fitting]] - w3,u_n[species_order_dictionary[k_fitting]] - w3)*dP(1))/((TAPobject_data.reactor_species.inert_gasses[k_fitting].sigma)**2)	
+								jfunc_2 = assemble(inner(u_n[species_order_dictionary[k_fitting]]*(2*(TAPobject_data.reactor_species.inert_gasses[k_fitting].inert_diffusion /(dx_r)) * (TAPobject_data.reactor.reactor_radius**2)*3.14159) - w3,u_n[species_order_dictionary[k_fitting]]*(2*(TAPobject_data.reactor_species.inert_gasses[k_fitting].inert_diffusion /(dx_r)) * (TAPobject_data.reactor.reactor_radius**2)*3.14159) - w3)*dP(1))/((TAPobject_data.reactor_species.inert_gasses[k_fitting].sigma)**2)	
 
 			if round(t,6) not in species_time:
 				try:
