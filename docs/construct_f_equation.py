@@ -6,8 +6,8 @@ import pandas as pd
 import numpy as np
 
 import sys
-from TAPobject import TAPobject
-from mechanism_reactants import mechanism_reactants
+from .TAPobject import TAPobject
+from .mechanism_reactants import mechanism_reactants
 
 
 def construct_f_equation(TAPobject_data: TAPobject):

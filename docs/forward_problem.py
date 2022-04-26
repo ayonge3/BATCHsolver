@@ -14,48 +14,48 @@ import warnings
 import matplotlib.pyplot as plt
 
 #from structures import *
-from define_adspecies import define_adspecies
-from define_gas import define_gas
-from experimental_data import experimental_data
-from mechanism import mechanism
-from reactor import reactor
-from reactor_species import reactor_species
+from .define_adspecies import define_adspecies
+from .define_gas import define_gas
+from .experimental_data import experimental_data
+from .mechanism import mechanism
+from .reactor import reactor
+from .reactor_species import reactor_species
 #from .read_old_input import read_old_input
-from TAPobject import TAPobject
+from .TAPobject import TAPobject
 
 #from file_io import *
-from new_experiments import new_experiments
-from read_experimental_data_object import read_experimental_data_object
-from read_mechanism_object import read_mechanism_object
-from read_reactor_object import read_reactor_object
-from read_reactor_species_object import read_reactor_species_object 
-from read_TAPobject import read_TAPobject 
-from read_transient_sensitivity import read_transient_sensitivity 
-from save_object import save_object
+from .new_experiments import new_experiments
+from .read_experimental_data_object import read_experimental_data_object
+from .read_mechanism_object import read_mechanism_object
+from .read_reactor_object import read_reactor_object
+from .read_reactor_species_object import read_reactor_species_object 
+from .read_TAPobject import read_TAPobject 
+from .read_transient_sensitivity import read_transient_sensitivity 
+from .save_object import save_object
 #from vary_input_file import vary_input_file
 
 #from mechanism_construction import *
 #from construct_batch_equation import make_batch_equation
-from construct_f_equation import construct_f_equation
-from construct_f_equation_multiple_experiments import construct_f_equation_multiple_experiments
-from construct_rate_equations import rateEqs
-from elementary_process import elementary_process
-from elementary_process_details import elementary_process_details
-from mechanism_constructor import mechanism_constructor
-from mechanism_reactants import mechanism_reactants
+from .construct_f_equation import construct_f_equation
+from .construct_f_equation_multiple_experiments import construct_f_equation_multiple_experiments
+from .construct_rate_equations import rateEqs
+from .elementary_process import elementary_process
+from .elementary_process_details import elementary_process_details
+from .mechanism_constructor import mechanism_constructor
+from .mechanism_reactants import mechanism_reactants
 
 #from reactor_species import *
 #from reference_parameters import *
-from reference_parameters import load_standard_parameters
+from .reference_parameters import load_standard_parameters
 
 #from simulation_notes import *
-from timing_details import *
-from error_details import *
+from .timing_details import *
+from .error_details import *
 
 #from inverse_problem import *
-from define_fitting_species import curveFitting
-from std_objective import stdEstablishment
-from total_objective import curveFitting
+from .define_fitting_species import curveFitting
+from .std_objective import stdEstablishment
+from .total_objective import curveFitting
 
 import jsonpickle
 import json
@@ -470,25 +470,37 @@ def forward_problem(pulse_time, pulse_number, TAPobject_data_original: TAPobject
 						c_exp = output_data[k_fitting][0][output_data['time'][0].index(round(t,6))]
 						slope = (-c_exp)/(1/TAPobject_data.mesh)
 						intercept = c_exp - ((1-(1/TAPobject_data.mesh))*slope)
-						w_new = Expression('B',A=Constant(slope),B=Constant(1),degree=0)
+						w_new = Expression('B',A=Constant(slope),B=Constant(c_exp),degree=0)
 						w_new2 = interpolate(w_new,V_du)
 						w3 = project(w_new2,V_du)
 						
 						try:
-							if k_fitting in TAPobject_data.reactor_species.gasses:
-								jfunc_2 += assemble(inner(u_n[species_order_dictionary[k_fitting]] - w3,u_n[species_order_dictionary[k_fitting]] - w3)*dP(1))/((TAPobject_data.reactor_species.gasses[k_fitting].sigma)**2)
-							elif k_fitting in TAPobject_data.reactor_species.inert_gasses:
-								jfunc_2 += assemble(inner(u_n[species_order_dictionary[k_fitting]] - w3,u_n[species_order_dictionary[k_fitting]] - w3)*dP(1))/((TAPobject_data.reactor_species.inert_gasses[k_fitting].sigma)**2)
+							if TAPobject_data.reactor_species.gasses[k_fitting].sigma != 0:
+								if k_fitting in TAPobject_data.reactor_species.gasses:
+									jfunc_2 += assemble(inner(u_n[species_order_dictionary[k_fitting]] - w3,u_n[species_order_dictionary[k_fitting]] - w3)*dP(1))/((TAPobject_data.reactor_species.gasses[k_fitting].sigma)**2)
+								elif k_fitting in TAPobject_data.reactor_species.inert_gasses:
+									jfunc_2 += assemble(inner(u_n[species_order_dictionary[k_fitting]] - w3,u_n[species_order_dictionary[k_fitting]] - w3)*dP(1))/((TAPobject_data.reactor_species.inert_gasses[k_fitting].sigma)**2)
+							else:
+								if k_fitting in TAPobject_data.reactor_species.gasses:
+									jfunc_2 += assemble(inner(u_n[species_order_dictionary[k_fitting]] - w3,u_n[species_order_dictionary[k_fitting]] - w3)*dP(1))
+								elif k_fitting in TAPobject_data.reactor_species.inert_gasses:
+									jfunc_2 += assemble(inner(u_n[species_order_dictionary[k_fitting]] - w3,u_n[species_order_dictionary[k_fitting]] - w3)*dP(1))
 								
 						except UnboundLocalError:
 							w_temp_2 = Expression('1',degree=0) 
 							w_temp2_2 = interpolate(w_temp_2,V_du)
 							w4_2 = project(w_temp2_2,V_du)	
-							if k_fitting in TAPobject_data.reactor_species.gasses:
-								jfunc_2 = assemble(inner(u_n[species_order_dictionary[k_fitting]] - w3,u_n[species_order_dictionary[k_fitting]] - w3)*dP(1))/((TAPobject_data.reactor_species.gasses[k_fitting].sigma)**2)	
-							elif k_fitting in TAPobject_data.reactor_species.inert_gasses:
-								jfunc_2 = assemble(inner(u_n[species_order_dictionary[k_fitting]] - w3,u_n[species_order_dictionary[k_fitting]] - w3)*dP(1))/((TAPobject_data.reactor_species.inert_gasses[k_fitting].sigma)**2)	
-
+							if TAPobject_data.reactor_species.gasses[k_fitting].sigma != 0:
+								if k_fitting in TAPobject_data.reactor_species.gasses:
+									jfunc_2 = assemble(inner(u_n[species_order_dictionary[k_fitting]] - w3,u_n[species_order_dictionary[k_fitting]] - w3)*dP(1))/((TAPobject_data.reactor_species.gasses[k_fitting].sigma)**2)	
+								elif k_fitting in TAPobject_data.reactor_species.inert_gasses:
+									jfunc_2 = assemble(inner(u_n[species_order_dictionary[k_fitting]] - w3,u_n[species_order_dictionary[k_fitting]] - w3)*dP(1))/((TAPobject_data.reactor_species.inert_gasses[k_fitting].sigma)**2)	
+							else:
+								if k_fitting in TAPobject_data.reactor_species.gasses:
+									jfunc_2 = assemble(inner(u_n[species_order_dictionary[k_fitting]] - w3,u_n[species_order_dictionary[k_fitting]] - w3)*dP(1))	
+								elif k_fitting in TAPobject_data.reactor_species.inert_gasses:
+									jfunc_2 = assemble(inner(u_n[species_order_dictionary[k_fitting]] - w3,u_n[species_order_dictionary[k_fitting]] - w3)*dP(1))	
+							
 			if round(t,6) not in species_time:
 				try:
 					if TAPobject_data.tangent_linear_sensitivity == True or TAPobject_data.adjoint_sensitivitiy == True or TAPobject_data.optimize == True:

@@ -1,4 +1,4 @@
-from tapsolver import *
+from batchsolver import *
 import numpy as np
 import os
 
@@ -141,6 +141,6 @@ opdh_1.gasses_objective = ['C3H8','O2','C3H6','H2O','CO2']
 print(opdh_1.mesh)
 opdh_1.data_name = './exp_new/TAP_experimental_data.json'
 opdh_1.output_name = 'fit_new'
-opdh_1.optimize = True
+#opdh_1.optimize = True
 forward_problem(0.5,1,opdh_1)
 flux_graph(opdh_1)

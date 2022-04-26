@@ -1,9 +1,9 @@
-from TAPobject import TAPobject
-from reactor_species import reactor_species
-from reactor import reactor
-from mechanism import mechanism
-from define_gas import define_gas
-from define_adspecies import define_adspecies
+from .TAPobject import TAPobject
+from .reactor_species import reactor_species
+from .reactor import reactor
+from .mechanism import mechanism
+from .define_gas import define_gas
+from .define_adspecies import define_adspecies
 #from structures import TAPobject,reactor_species,reactor,mechanism, define_gas, define_adspecies
 import jsonpickle
 import json
@@ -76,8 +76,6 @@ def read_TAPobject(file_name):
 	# Simulation precision preferences
 	loaded_TAPobject.mesh = sameObject2.mesh
 	
-	loaded_TAPobject.parameter_scale = sameObject2.parameter_scale
-
 	# Data storage preferences
 	loaded_TAPobject.output_name = sameObject2.output_name
 	loaded_TAPobject.derivative_name = sameObject2.derivative_name
